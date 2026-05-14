@@ -1,0 +1,13 @@
+{
+  "btpBaseUrl": "https://<your-tenant>.it-cpi018-rt.cfapps.<region>.hana.ondemand.com/api/v1",
+  "scriptCollectionsDir": "./ScriptCollections",
+  "collections": [
+    {
+      "id": "Scripts_SAPtoWEBPOS",
+      "name": "Scripts_SAPtoWEBPOS",
+      "iflowId": "SAPtoWEBPOS",
+      "iflowVersion": "active"
+    }
+  ],
+  "defaultVersion": "active"
+}
