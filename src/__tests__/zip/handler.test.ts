@@ -59,9 +59,8 @@ describe("zip/handler", () => {
   });
 
   describe("encodeBase64Url", () => {
-    it("placeholder", () => {
-      // TODO: assert base64url encoding output.
-      expect(encodeBase64Url).toBeDefined();
+    it("encodes base64url without padding", () => {
+      expect(encodeBase64Url(Buffer.from("f"))).toBe("Zg");
     });
 
     it.todo("should replace +/ and trim padding");
