@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosHeaders, AxiosInstance } from "axios";
 import { getAccessToken } from "../auth/oauth";
 import { createIFlowError } from "../utils/logger";
 
@@ -22,8 +22,8 @@ export function createApiClient(baseUrl: string): ApiClient {
 
   client.interceptors.request.use(async (config) => {
     const token = await getAccessToken();
-    const headers = config.headers ?? {};
-    headers.Authorization = `Bearer ${token}`;
+    const headers = AxiosHeaders.from(config.headers);
+    headers.set("Authorization", `Bearer ${token}`);
     config.headers = headers;
     return config;
   });

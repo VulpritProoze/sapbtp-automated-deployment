@@ -35,7 +35,7 @@ export async function runStatusCommand(client: ApiClient, config: IFlowConfig): 
       }
 
       const localDir = path.resolve(collectionsDir, collection.id);
-      const localFiles = await listGroovyFiles(localDir).catch(() => []);
+      const localFiles = await listGroovyFiles(localDir).catch((): string[] => []);
       const localLatest = await getLatestMtime(localFiles);
 
       const statusSymbols = {
