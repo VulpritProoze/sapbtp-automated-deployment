@@ -1,33 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { findCollection, loadConfig } from "../../config/loader";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import fs from "fs";
+import { loadConfig, findCollection } from "../../config/loader";
+import dotenv from "dotenv";
 
 vi.mock("fs", () => ({
   default: {
     existsSync: vi.fn(),
     readFileSync: vi.fn(),
-    promises: {
-      readFile: vi.fn(),
-      writeFile: vi.fn(),
-      readdir: vi.fn(),
-      stat: vi.fn(),
-      rm: vi.fn(),
-      mkdir: vi.fn(),
-      access: vi.fn(),
-    },
-    constants: { F_OK: 0 },
   },
-  existsSync: vi.fn(),
-  readFileSync: vi.fn(),
-  promises: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    readdir: vi.fn(),
-    stat: vi.fn(),
-    rm: vi.fn(),
-    mkdir: vi.fn(),
-    access: vi.fn(),
-  },
-  constants: { F_OK: 0 },
 }));
 
 vi.mock("dotenv", () => ({
@@ -36,36 +16,54 @@ vi.mock("dotenv", () => ({
   },
 }));
 
-vi.mock("../../utils/logger", () => ({
-  createIFlowError: vi.fn((code: string, message: string) => {
-    const error = new Error(message) as Error & { code: string };
-    error.code = code;
-    return error;
-  }),
-}));
-
 describe("config/loader", () => {
+  const originalEnv = { ...process.env };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.OAUTH_TOKEN_URL = "https://auth";
+    process.env.CLIENT_ID = "id";
+    process.env.CLIENT_SECRET = "secret";
   });
 
-  describe("findCollection", () => {
-    it("placeholder", () => {
-      // TODO: assert collection lookup by id.
-      expect(findCollection).toBeDefined();
-    });
-
-    it.todo("should return the matching collection when present");
-    it.todo("should return undefined when the collection is missing");
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
   describe("loadConfig", () => {
-    it("placeholder", () => {
-      // TODO: assert env/config parsing and validation.
-      expect(loadConfig).toBeDefined();
+    it("should load valid config and env", () => {
+      const mockConfig = {
+        btpBaseUrl: "https://btp",
+        scriptCollectionsDir: "src/collections",
+        collections: [
+          { id: "c1", name: "C1", iflowId: "i1", iflowVersion: "1.0.0" }
+        ],
+        defaultVersion: "active"
+      };
+
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(mockConfig));
+
+      const config = loadConfig();
+
+      expect(config.btpBaseUrl).toBe("https://btp");
+      expect(config.collections).toHaveLength(1);
     });
 
-    it.todo("should load and validate config from disk");
-    it.todo("should throw when required environment variables are missing");
+    it("should throw error if env var is missing", () => {
+      delete process.env.CLIENT_ID;
+      expect(() => loadConfig()).toThrow("Missing required env var: CLIENT_ID");
+    });
+  });
+
+  describe("findCollection", () => {
+    it("should find collection by id", () => {
+      const config = {
+        collections: [{ id: "find-me", name: "Name", iflowId: "i", iflowVersion: "v" }]
+      } as any;
+      const found = findCollection(config, "find-me");
+      expect(found).toBeDefined();
+      expect(found?.name).toBe("Name");
+    });
   });
 });

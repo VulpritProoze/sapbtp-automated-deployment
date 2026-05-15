@@ -6,111 +6,132 @@ import {
   deployScriptCollection,
   saveScriptCollectionAsVersion,
 } from "../../api/scriptCollections";
-
-vi.mock("../../api/client", () => ({
-  createApiClient: vi.fn(() => ({
-    axios: {
-      get: vi.fn(),
-      put: vi.fn(),
-      post: vi.fn(),
-    },
-    fetchCsrfToken: vi.fn(),
-  })),
-}));
-
-vi.mock("../../config/loader", () => ({
-  loadConfig: vi.fn(() => ({
-    btpBaseUrl: "https://mock.example.com/api/v1",
-    scriptCollectionsDir: "./ScriptCollections",
-    collections: [
-      {
-        id: "Scripts_Test",
-        name: "Scripts_Test",
-        iflowId: "TestFlow",
-        iflowVersion: "active",
-      },
-    ],
-    defaultVersion: "active",
-  })),
-}));
-
-vi.mock("fs", () => ({
-  default: {
-    promises: {
-      readFile: vi.fn(),
-      writeFile: vi.fn(),
-      readdir: vi.fn(),
-      stat: vi.fn(),
-      rm: vi.fn(),
-      mkdir: vi.fn(),
-      access: vi.fn(),
-    },
-    constants: { F_OK: 0 },
-  },
-  promises: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    readdir: vi.fn(),
-    stat: vi.fn(),
-    rm: vi.fn(),
-    mkdir: vi.fn(),
-    access: vi.fn(),
-  },
-  constants: { F_OK: 0 },
-}));
+import { ApiClient } from "../../api/client";
 
 describe("api/scriptCollections", () => {
+  const mockAxios = {
+    get: vi.fn(),
+    put: vi.fn(),
+    post: vi.fn(),
+    defaults: { baseURL: "https://mock" },
+  };
+  const mockClient = {
+    axios: mockAxios,
+    fetchCsrfToken: vi.fn(),
+  } as unknown as ApiClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("getScriptCollectionMetadata", () => {
-    it("placeholder", () => {
-      // TODO: assert metadata response parsing.
-      expect(getScriptCollectionMetadata).toBeDefined();
+    it("should return metadata for a collection", async () => {
+      const mockData = { Id: "test", Name: "Test", Version: "1.0.0" };
+      mockAxios.get.mockResolvedValueOnce({ data: mockData });
+
+      const result = await getScriptCollectionMetadata(mockClient, "test", "1.0.0");
+
+      expect(result).toEqual(mockData);
+      expect(mockAxios.get).toHaveBeenCalledWith(
+        "/ScriptCollectionDesigntimeArtifacts(Id='test',Version='1.0.0')"
+      );
     });
 
-    it.todo("should return metadata for a collection");
-    it.todo("should throw IFlowError on 4xx response");
+    it("should throw IFlowError on 4xx response", async () => {
+      mockAxios.get.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { status: 404 },
+      });
+
+      await expect(
+        getScriptCollectionMetadata(mockClient, "test", "1.0.0")
+      ).rejects.toThrow("Failed to fetch metadata");
+    });
   });
 
   describe("downloadScriptCollectionZip", () => {
-    it("placeholder", () => {
-      // TODO: assert zip buffer conversion.
-      expect(downloadScriptCollectionZip).toBeDefined();
+    it("should download the collection zip", async () => {
+      const mockBuffer = Buffer.from("test zip content");
+      mockAxios.get.mockResolvedValueOnce({ data: mockBuffer });
+
+      const result = await downloadScriptCollectionZip(mockClient, "test", "1.0.0");
+
+      expect(result).toEqual(mockBuffer);
+      expect(mockAxios.get).toHaveBeenCalledWith(
+        "/ScriptCollectionDesigntimeArtifacts(Id='test',Version='1.0.0')/$value",
+        { responseType: "arraybuffer" }
+      );
     });
 
-    it.todo("should download the collection zip");
-    it.todo("should throw IFlowError on network failure");
+    it("should throw IFlowError on network failure", async () => {
+      mockAxios.get.mockRejectedValueOnce(new Error("Network Error"));
+
+      await expect(
+        downloadScriptCollectionZip(mockClient, "test", "1.0.0")
+      ).rejects.toThrow("Failed to download script collection");
+    });
   });
 
   describe("uploadScriptCollectionZip", () => {
-    it("placeholder", () => {
-      // TODO: assert request body payload and CSRF usage.
-      expect(uploadScriptCollectionZip).toBeDefined();
-    });
+    it("should upload ZIP payload with base64 content", async () => {
+      const mockBuffer = Buffer.from("test zip content");
+      vi.mocked(mockClient.fetchCsrfToken).mockResolvedValueOnce("mock-csrf");
+      mockAxios.put.mockResolvedValueOnce({ data: {} });
 
-    it.todo("should upload ZIP payload with base64url content");
-    it.todo("should throw IFlowError when upload fails");
+      await uploadScriptCollectionZip(mockClient, {
+        id: "test",
+        version: "1.0.0",
+        name: "Test Name",
+        zipBuffer: mockBuffer,
+      });
+
+      expect(mockClient.fetchCsrfToken).toHaveBeenCalled();
+      expect(mockAxios.put).toHaveBeenCalledWith(
+        "/ScriptCollectionDesigntimeArtifacts(Id='test',Version='1.0.0')",
+        {
+          Name: "Test Name",
+          ArtifactContent: mockBuffer.toString("base64"),
+        },
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "X-CSRF-Token": "mock-csrf",
+          }),
+        })
+      );
+    });
   });
 
   describe("deployScriptCollection", () => {
-    it("placeholder", () => {
-      // TODO: assert deploy endpoint call.
-      expect(deployScriptCollection).toBeDefined();
-    });
+    it("should deploy the script collection", async () => {
+      vi.mocked(mockClient.fetchCsrfToken).mockResolvedValueOnce("mock-csrf");
+      mockAxios.post.mockResolvedValueOnce({ data: {} });
 
-    it.todo("should deploy the script collection");
-    it.todo("should throw IFlowError on CSRF failure");
+      await deployScriptCollection(mockClient, "test", "1.0.0");
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        "DeployScriptCollectionDesignTimeArtifact",
+        null,
+        expect.objectContaining({
+          params: { Id: "'test'", Version: "'1.0.0'" },
+        })
+      );
+    });
   });
 
   describe("saveScriptCollectionAsVersion", () => {
-    it("placeholder", () => {
-      // TODO: assert save-as-version request parameters.
-      expect(saveScriptCollectionAsVersion).toBeDefined();
-    });
+    it("should save the collection as a new version", async () => {
+      vi.mocked(mockClient.fetchCsrfToken).mockResolvedValueOnce("mock-csrf");
+      mockAxios.post.mockResolvedValueOnce({ data: {} });
 
-    it.todo("should save the collection as a new version");
-    it.todo("should throw IFlowError on API failure");
+      await saveScriptCollectionAsVersion(mockClient, "test", "1.0.1");
+
+      expect(mockAxios.post).toHaveBeenCalledWith(
+        "ScriptCollectionDesignTimeArtifactSaveAsVersion",
+        null,
+        expect.objectContaining({
+          params: { Id: "'test'", SaveAsVersion: "'1.0.1'" },
+        })
+      );
+    });
   });
 });

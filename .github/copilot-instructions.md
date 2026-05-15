@@ -1,7 +1,7 @@
 # iflow-cli
 
 ## Project purpose
-iflow-cli is a TypeScript CLI that manages SAP BTP Integration Suite Groovy script collections. It syncs local .groovy files in ScriptCollections/ with remote script collection artifacts, automating pull, push, deploy, diff, status, and init workflows.
+iflow-cli is a TypeScript CLI that manages SAP BTP Integration Suite Groovy script collections. It syncs local .groovy files in ScriptCollections/ with remote script collection artifacts, automating pull, push, deploy, diff, status, init, and version workflows.
 
 ## Architecture overview
 The code follows a layered flow:
@@ -42,6 +42,7 @@ Manual testing steps per command:
 - diff: verify unified diff output and exit code 1 on changes.
 - status: confirm the table lists each collection with a sensible status.
 - init: verify folder creation, README.md, .gitkeep, and config update.
+- version: verify the script collection is saved as a new version on BTP.
 For unit tests later, mock axios in src/api and use fixture ZIPs for zip/handler.ts.
 
 ## File ownership map

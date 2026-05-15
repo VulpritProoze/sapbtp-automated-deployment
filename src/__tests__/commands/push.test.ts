@@ -3,11 +3,11 @@ import { runPushCommand } from "../../commands/push";
 import {
   deployScriptCollection,
   uploadScriptCollectionZip,
-  saveScriptCollectionAsVersion,
   downloadScriptCollectionZip,
 } from "../../api/scriptCollections";
 import { zipGroovyFiles } from "../../zip/handler";
 import { logger } from "../../utils/logger";
+import { ApiClient } from "../../api/client";
 
 vi.mock("../../api/client", () => ({
   createApiClient: vi.fn(() => ({
@@ -47,12 +47,19 @@ vi.mock("../../config/loader", () => ({
 }));
 
 describe("commands/push", () => {
-  const mockClient = {} as any;
-  const mockConfig = { scriptCollectionsDir: "dir", defaultVersion: "active", btpBaseUrl: "", collections: [] };
+  const mockClient = {} as unknown as ApiClient;
+  const mockConfig = {
+    scriptCollectionsDir: "dir",
+    defaultVersion: "active",
+    btpBaseUrl: "",
+    collections: [],
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("process.exit");
+    });
   });
 
   describe("runPushCommand", () => {
@@ -83,7 +90,9 @@ describe("commands/push", () => {
 
       await runPushCommand(mockClient, mockConfig, { id: "Test2" });
 
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Could not download base ZIP"));
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Could not download base ZIP")
+      );
       expect(zipGroovyFiles).toHaveBeenCalledWith(expect.any(String), undefined);
       expect(uploadScriptCollectionZip).toHaveBeenCalled();
     });
@@ -101,7 +110,9 @@ describe("commands/push", () => {
       vi.mocked(downloadScriptCollectionZip).mockResolvedValueOnce(Buffer.from(""));
       vi.mocked(zipGroovyFiles).mockRejectedValueOnce(new Error("Zip error"));
 
-      await runPushCommand(mockClient, mockConfig, { id: "Test4" });
+      await expect(
+        runPushCommand(mockClient, mockConfig, { id: "Test4" })
+      ).rejects.toThrow("process.exit");
 
       expect(logger.error).toHaveBeenCalled();
       expect(process.exit).toHaveBeenCalledWith(1);

@@ -6,6 +6,7 @@ dist/
 /debug-artifacts/
 debug-push.ts
 tmp-metadata.xml
+download-zip.ts
 
 # Agent config copies are intentional -- do not ignore them
 # .github/copilot-instructions.md and AGENTS.md mirror CLAUDE.md

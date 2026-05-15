@@ -1,71 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { runDeployCommand } from "../../commands/deploy";
+import { deployScriptCollection } from "../../api/scriptCollections";
+import { deployIflow } from "../../api/iflow";
+import { logger } from "../../utils/logger";
+import { ApiClient } from "../../api/client";
 
-vi.mock("../../api/client", () => ({
-  createApiClient: vi.fn(() => ({
-    axios: {
-      get: vi.fn(),
-      put: vi.fn(),
-      post: vi.fn(),
-    },
-    fetchCsrfToken: vi.fn(),
-  })),
+vi.mock("../../api/scriptCollections", () => ({
+  deployScriptCollection: vi.fn(),
 }));
 
-vi.mock("../../config/loader", () => ({
-  loadConfig: vi.fn(() => ({
-    btpBaseUrl: "https://mock.example.com/api/v1",
-    scriptCollectionsDir: "./ScriptCollections",
-    collections: [
-      {
-        id: "Scripts_Test",
-        name: "Scripts_Test",
-        iflowId: "TestFlow",
-        iflowVersion: "active",
-      },
-    ],
-    defaultVersion: "active",
-  })),
+vi.mock("../../api/iflow", () => ({
+  deployIflow: vi.fn(),
 }));
 
-vi.mock("fs", () => ({
-  default: {
-    promises: {
-      readFile: vi.fn(),
-      writeFile: vi.fn(),
-      readdir: vi.fn(),
-      stat: vi.fn(),
-      rm: vi.fn(),
-      mkdir: vi.fn(),
-      access: vi.fn(),
-    },
-    constants: { F_OK: 0 },
+vi.mock("../../utils/logger", () => ({
+  logger: {
+    success: vi.fn(),
+    error: vi.fn(),
   },
-  promises: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    readdir: vi.fn(),
-    stat: vi.fn(),
-    rm: vi.fn(),
-    mkdir: vi.fn(),
-    access: vi.fn(),
-  },
-  constants: { F_OK: 0 },
 }));
 
 describe("commands/deploy", () => {
+  const mockClient = {} as unknown as ApiClient;
+  const mockConfig = {
+    scriptCollectionsDir: "./ScriptCollections",
+    defaultVersion: "active",
+    collections: [{ id: "test", name: "T", iflowId: "flow1", iflowVersion: "1.0.0" }],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
   });
 
   describe("runDeployCommand", () => {
-    it("placeholder", () => {
-      // TODO: assert deploy endpoint calls and iflow behavior.
-      expect(runDeployCommand).toBeDefined();
+    it("should deploy script collection", async () => {
+      vi.mocked(deployScriptCollection).mockResolvedValueOnce();
+      await runDeployCommand(mockClient, mockConfig as any, { id: "test" });
+      expect(deployScriptCollection).toHaveBeenCalledWith(mockClient, "test", "active");
+      expect(logger.success).toHaveBeenCalledWith(expect.stringContaining("Deployed script collection"));
     });
 
-    it.todo("should deploy the script collection");
-    it.todo("should deploy the iFlow when --iflow is set");
-    it.todo("should surface IFlowError on API failure");
+    it("should deploy iflow if requested", async () => {
+      vi.mocked(deployScriptCollection).mockResolvedValueOnce();
+      vi.mocked(deployIflow).mockResolvedValueOnce();
+      await runDeployCommand(mockClient, mockConfig as any, { id: "test", iflow: true });
+      expect(deployIflow).toHaveBeenCalledWith(mockClient, "flow1", "1.0.0");
+      expect(logger.success).toHaveBeenCalledTimes(2);
+    });
+
+    it("should exit with 1 on error", async () => {
+      vi.mocked(deployScriptCollection).mockRejectedValueOnce(new Error("API Error"));
+      await runDeployCommand(mockClient, mockConfig as any, { id: "test" });
+      expect(logger.error).toHaveBeenCalled();
+      expect(process.exit).toHaveBeenCalledWith(1);
+    });
   });
 });

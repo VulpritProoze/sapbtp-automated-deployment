@@ -1,42 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import fs from "fs";
 import { runDiffCommand } from "../../commands/diff";
+import { downloadScriptCollectionZip } from "../../api/scriptCollections";
+import { logger } from "../../utils/logger";
+import { ApiClient } from "../../api/client";
+import * as fsUtils from "../../utils/fs";
 
 vi.mock("fs", () => ({
   default: {
     promises: {
-      readFile: vi.fn(),
-      writeFile: vi.fn(),
-      readdir: vi.fn(),
-      stat: vi.fn(),
+      mkdtemp: vi.fn(() => Promise.resolve("/tmp/iflow-diff-abc")),
       rm: vi.fn(),
-      mkdir: vi.fn(),
-      access: vi.fn(),
-      mkdtemp: vi.fn(),
     },
-    constants: { F_OK: 0 },
   },
-  promises: {
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    readdir: vi.fn(),
-    stat: vi.fn(),
-    rm: vi.fn(),
-    mkdir: vi.fn(),
-    access: vi.fn(),
-    mkdtemp: vi.fn(),
-  },
-  constants: { F_OK: 0 },
-}));
-
-vi.mock("os", () => ({
-  default: {
-    tmpdir: vi.fn(() => "C:/temp"),
-  },
-  tmpdir: vi.fn(() => "C:/temp"),
-}));
-
-vi.mock("../../api/client", () => ({
-  createApiClient: vi.fn(),
 }));
 
 vi.mock("../../api/scriptCollections", () => ({
@@ -54,23 +30,64 @@ vi.mock("../../utils/fs", () => ({
 
 vi.mock("../../utils/logger", () => ({
   logger: {
-    error: vi.fn(),
     success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
 describe("commands/diff", () => {
+  const mockClient = {} as unknown as ApiClient;
+  const mockConfig = {
+    scriptCollectionsDir: "./ScriptCollections",
+    defaultVersion: "active",
+    btpBaseUrl: "",
+    collections: [],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    process.exitCode = 0;
   });
 
   describe("runDiffCommand", () => {
-    it("placeholder", () => {
-      // TODO: assert local/remote diff rendering and exit code behavior.
-      expect(runDiffCommand).toBeDefined();
+    it("should report no differences if local and remote match", async () => {
+      vi.mocked(downloadScriptCollectionZip).mockResolvedValueOnce(Buffer.from(""));
+      vi.mocked(fsUtils.listGroovyFiles).mockResolvedValueOnce(["local/file1.groovy"]);
+      vi.mocked(fsUtils.listGroovyFiles).mockResolvedValueOnce(["remote/file1.groovy"]);
+      vi.mocked(fsUtils.readFileText).mockResolvedValue("same content");
+
+      await runDiffCommand(mockClient, mockConfig, { id: "test-id" });
+
+      expect(logger.success).toHaveBeenCalledWith(expect.stringContaining("No differences found"));
+      expect(process.exitCode).toBe(0);
     });
 
-    it.todo("should print a unified diff when files differ");
-    it.todo("should report no differences when local and remote content match");
+    it("should set exit code 1 if differences are found", async () => {
+      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      vi.mocked(downloadScriptCollectionZip).mockResolvedValueOnce(Buffer.from(""));
+      vi.mocked(fsUtils.listGroovyFiles).mockResolvedValueOnce(["local/file1.groovy"]);
+      vi.mocked(fsUtils.listGroovyFiles).mockResolvedValueOnce(["remote/file1.groovy"]);
+      
+      vi.mocked(fsUtils.readFileText)
+        .mockResolvedValueOnce("local content")
+        .mockResolvedValueOnce("remote content");
+
+      await runDiffCommand(mockClient, mockConfig, { id: "test-id" });
+
+      expect(consoleSpy).toHaveBeenCalled();
+      expect(process.exitCode).toBe(1);
+      consoleSpy.mockRestore();
+    });
+
+    it("should exit with 1 on API failure", async () => {
+      const exitSpy = vi.spyOn(process, "exit").mockImplementation((() => {}) as any);
+      vi.mocked(downloadScriptCollectionZip).mockRejectedValueOnce(new Error("API Error"));
+
+      await runDiffCommand(mockClient, mockConfig, { id: "test-id" });
+
+      expect(logger.error).toHaveBeenCalled();
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      exitSpy.mockRestore();
+    });
   });
 });

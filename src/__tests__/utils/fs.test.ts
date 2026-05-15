@@ -1,34 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  ensureDir,
-  fileExists,
-  listGroovyFiles,
-  readFileText,
-  writeFileText,
-  getLatestMtime,
-} from "../../utils/fs";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import fs from "fs";
+import { ensureDir, fileExists, listGroovyFiles, readFileText, writeFileText, getLatestMtime } from "../../utils/fs";
 
 vi.mock("fs", () => ({
   default: {
     promises: {
-      access: vi.fn(),
       mkdir: vi.fn(),
-      readFile: vi.fn(),
+      access: vi.fn(),
       readdir: vi.fn(),
-      stat: vi.fn(),
+      readFile: vi.fn(),
       writeFile: vi.fn(),
+      stat: vi.fn(),
     },
     constants: { F_OK: 0 },
   },
-  promises: {
-    access: vi.fn(),
-    mkdir: vi.fn(),
-    readFile: vi.fn(),
-    readdir: vi.fn(),
-    stat: vi.fn(),
-    writeFile: vi.fn(),
-  },
-  constants: { F_OK: 0 },
 }));
 
 describe("utils/fs", () => {
@@ -36,45 +21,47 @@ describe("utils/fs", () => {
     vi.clearAllMocks();
   });
 
-  describe("ensureDir", () => {
-    it("placeholder", () => {
-      // TODO: assert directory creation uses recursive mkdir.
-      expect(ensureDir).toBeDefined();
-    });
+  it("ensureDir should call mkdir", async () => {
+    await ensureDir("test");
+    expect(fs.promises.mkdir).toHaveBeenCalledWith("test", { recursive: true });
   });
 
-  describe("fileExists", () => {
-    it("placeholder", () => {
-      // TODO: assert existence checks map to fs.access.
-      expect(fileExists).toBeDefined();
-    });
+  it("fileExists should return true if accessible", async () => {
+    vi.mocked(fs.promises.access).mockResolvedValueOnce();
+    expect(await fileExists("test")).toBe(true);
   });
 
-  describe("listGroovyFiles", () => {
-    it("placeholder", () => {
-      // TODO: assert only .groovy files are returned and sorted.
-      expect(listGroovyFiles).toBeDefined();
-    });
+  it("fileExists should return false if not accessible", async () => {
+    vi.mocked(fs.promises.access).mockRejectedValueOnce(new Error());
+    expect(await fileExists("test")).toBe(false);
   });
 
-  describe("readFileText", () => {
-    it("placeholder", () => {
-      // TODO: assert file contents are read as utf-8.
-      expect(readFileText).toBeDefined();
-    });
+  it("listGroovyFiles should filter and return paths", async () => {
+    vi.mocked(fs.promises.readdir).mockResolvedValueOnce([
+      { isFile: () => true, name: "a.groovy" },
+      { isFile: () => true, name: "b.txt" },
+      { isFile: () => false, name: "dir.groovy" },
+    ] as any);
+    const files = await listGroovyFiles("dir");
+    expect(files).toHaveLength(1);
+    expect(files[0]).toContain("a.groovy");
   });
 
-  describe("writeFileText", () => {
-    it("placeholder", () => {
-      // TODO: assert file contents are written as utf-8.
-      expect(writeFileText).toBeDefined();
-    });
+  it("readFileText and writeFileText should call fs", async () => {
+    vi.mocked(fs.promises.readFile).mockResolvedValueOnce("content");
+    expect(await readFileText("p")).toBe("content");
+    await writeFileText("p", "c");
+    expect(fs.promises.writeFile).toHaveBeenCalledWith("p", "c", "utf-8");
   });
 
-  describe("getLatestMtime", () => {
-    it("placeholder", () => {
-      // TODO: assert latest file modification time calculation.
-      expect(getLatestMtime).toBeDefined();
-    });
+  it("getLatestMtime should return max mtime", async () => {
+    vi.mocked(fs.promises.stat).mockResolvedValueOnce({ mtimeMs: 100 } as any);
+    vi.mocked(fs.promises.stat).mockResolvedValueOnce({ mtimeMs: 200 } as any);
+    const time = await getLatestMtime(["a", "b"]);
+    expect(time).toBe(200);
+  });
+
+  it("getLatestMtime should return null for empty list", async () => {
+    expect(await getLatestMtime([])).toBeNull();
   });
 });
