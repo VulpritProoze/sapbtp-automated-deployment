@@ -66,10 +66,7 @@ export function loadConfig(): IFlowConfig {
 
   const configPath = path.resolve(process.cwd(), "iflow.config.json");
   if (!fs.existsSync(configPath)) {
-    throw createIFlowError(
-      "CONFIG_ERROR",
-      `Missing iflow.config.json at ${configPath}`
-    );
+    throw createIFlowError("CONFIG_ERROR", `Missing iflow.config.json at ${configPath}`);
   }
 
   let rawConfig: unknown;
@@ -84,9 +81,10 @@ export function loadConfig(): IFlowConfig {
   assertString(config.scriptCollectionsDir, "scriptCollectionsDir");
 
   const collections = validateCollections(config.collections);
-  const defaultVersion = typeof config.defaultVersion === "string" && config.defaultVersion
-    ? config.defaultVersion
-    : "active";
+  const defaultVersion =
+    typeof config.defaultVersion === "string" && config.defaultVersion
+      ? config.defaultVersion
+      : "active";
 
   return {
     btpBaseUrl: config.btpBaseUrl,

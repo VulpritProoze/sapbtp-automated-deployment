@@ -107,19 +107,15 @@ export async function deployScriptCollection(
 ): Promise<void> {
   try {
     const csrfToken = await client.fetchCsrfToken("DeployScriptCollectionDesignTimeArtifact");
-    await client.axios.post(
-      "DeployScriptCollectionDesignTimeArtifact",
-      null,
-      {
-        params: {
-          Id: `'${id}'`,
-          Version: `'${version}'`,
-        },
-        headers: {
-          "X-CSRF-Token": csrfToken,
-        },
-      }
-    );
+    await client.axios.post("DeployScriptCollectionDesignTimeArtifact", null, {
+      params: {
+        Id: `'${id}'`,
+        Version: `'${version}'`,
+      },
+      headers: {
+        "X-CSRF-Token": csrfToken,
+      },
+    });
   } catch (err) {
     throw createIFlowError(
       "API_ERROR",
@@ -136,20 +132,18 @@ export async function saveScriptCollectionAsVersion(
   newVersion: string
 ): Promise<void> {
   try {
-    const csrfToken = await client.fetchCsrfToken("ScriptCollectionDesignTimeArtifactSaveAsVersion");
-    await client.axios.post(
-      "ScriptCollectionDesignTimeArtifactSaveAsVersion",
-      null,
-      {
-        params: {
-          Id: `'${id}'`,
-          SaveAsVersion: `'${newVersion}'`,
-        },
-        headers: {
-          "X-CSRF-Token": csrfToken,
-        },
-      }
+    const csrfToken = await client.fetchCsrfToken(
+      "ScriptCollectionDesignTimeArtifactSaveAsVersion"
     );
+    await client.axios.post("ScriptCollectionDesignTimeArtifactSaveAsVersion", null, {
+      params: {
+        Id: `'${id}'`,
+        SaveAsVersion: `'${newVersion}'`,
+      },
+      headers: {
+        "X-CSRF-Token": csrfToken,
+      },
+    });
   } catch (err) {
     throw createIFlowError(
       "API_ERROR",

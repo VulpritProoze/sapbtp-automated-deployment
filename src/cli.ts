@@ -41,9 +41,7 @@ async function main(): Promise<void> {
     .requiredOption("--id <collectionId>", "Script collection Id")
     .action((options) => runDiffCommand(apiClient, config, options));
 
-  program
-    .command("status")
-    .action(() => runStatusCommand(apiClient, config));
+  program.command("status").action(() => runStatusCommand(apiClient, config));
 
   program
     .command("init")

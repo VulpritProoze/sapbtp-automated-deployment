@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 *.log
+/coverage/
 
 # Agent config copies are intentional -- do not ignore them
 # .github/copilot-instructions.md and AGENTS.md mirror CLAUDE.md

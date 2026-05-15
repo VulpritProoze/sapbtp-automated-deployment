@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  encodeBase64Url,
-  zipGroovyFiles,
-  extractGroovyZip,
-} from "../../zip/handler";
+import { encodeBase64Url, zipGroovyFiles, extractGroovyZip } from "../../zip/handler";
 
 vi.mock("../../api/client", () => ({
   createApiClient: vi.fn(() => ({

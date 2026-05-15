@@ -5,20 +5,13 @@ import { createIFlowError } from "../utils/logger";
 import { ensureDir, listGroovyFiles } from "../utils/fs";
 
 export function encodeBase64Url(buffer: Buffer): string {
-  return buffer
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
+  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 export async function zipGroovyFiles(collectionDir: string): Promise<Buffer> {
   const files = await listGroovyFiles(collectionDir);
   if (files.length === 0) {
-    throw createIFlowError(
-      "ZIP_ERROR",
-      `No .groovy files found in ${collectionDir}`
-    );
+    throw createIFlowError("ZIP_ERROR", `No .groovy files found in ${collectionDir}`);
   }
 
   const zip = new AdmZip();
@@ -31,10 +24,7 @@ export async function zipGroovyFiles(collectionDir: string): Promise<Buffer> {
   return zip.toBuffer();
 }
 
-export async function extractGroovyZip(
-  zipBuffer: Buffer,
-  destDir: string
-): Promise<string[]> {
+export async function extractGroovyZip(zipBuffer: Buffer, destDir: string): Promise<string[]> {
   await ensureDir(destDir);
 
   const zip = new AdmZip(zipBuffer);

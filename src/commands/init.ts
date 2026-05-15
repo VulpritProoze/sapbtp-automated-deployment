@@ -9,10 +9,7 @@ export interface InitOptions {
   name?: string;
 }
 
-export async function runInitCommand(
-  config: IFlowConfig,
-  options: InitOptions
-): Promise<void> {
+export async function runInitCommand(config: IFlowConfig, options: InitOptions): Promise<void> {
   try {
     const collectionsDir = path.resolve(process.cwd(), config.scriptCollectionsDir);
     const collectionDir = path.resolve(collectionsDir, options.id);
@@ -37,9 +34,7 @@ export async function runInitCommand(
       defaultVersion?: string;
     };
 
-    const collections = Array.isArray(rawConfig.collections)
-      ? rawConfig.collections
-      : [];
+    const collections = Array.isArray(rawConfig.collections) ? rawConfig.collections : [];
 
     if (collections.some((item) => item.id === options.id)) {
       throw createIFlowError(
@@ -60,11 +55,7 @@ export async function runInitCommand(
 
     rawConfig.collections = collections;
 
-    await fs.promises.writeFile(
-      configPath,
-      `${JSON.stringify(rawConfig, null, 2)}\n`,
-      "utf-8"
-    );
+    await fs.promises.writeFile(configPath, `${JSON.stringify(rawConfig, null, 2)}\n`, "utf-8");
 
     logger.success(`Initialized ScriptCollections/${options.id}`);
     logger.info("Next steps:");

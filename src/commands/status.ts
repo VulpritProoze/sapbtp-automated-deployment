@@ -5,10 +5,7 @@ import { IFlowConfig } from "../config/loader";
 import { getLatestMtime, listGroovyFiles } from "../utils/fs";
 import { logger } from "../utils/logger";
 
-export async function runStatusCommand(
-  client: ApiClient,
-  config: IFlowConfig
-): Promise<void> {
+export async function runStatusCommand(client: ApiClient, config: IFlowConfig): Promise<void> {
   try {
     const collectionsDir = path.resolve(process.cwd(), config.scriptCollectionsDir);
 
@@ -94,9 +91,7 @@ export async function runStatusCommand(
     console.log(widths.map((width) => "-".repeat(width)).join("-+-"));
 
     for (const row of rows) {
-      console.log(
-        formatRow([row.name, row.localCount, row.remoteVersion, row.status])
-      );
+      console.log(formatRow([row.name, row.localCount, row.remoteVersion, row.status]));
     }
   } catch (err) {
     logger.error(err);
