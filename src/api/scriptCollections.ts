@@ -1,6 +1,5 @@
-import axios from "axios";
 import { ApiClient } from "./client";
-import { createIFlowError } from "../utils/logger";
+import { createIFlowError, logger } from "../utils/logger";
 
 export interface ScriptCollectionMetadata {
   Id: string;
@@ -20,11 +19,13 @@ export interface UploadScriptCollectionParams {
 }
 
 function buildCollectionPath(id: string, version: string): string {
-  return `ScriptCollectionDesignTimeArtifacts(Id='${id}',Version='${version}')`;
+  return `/ScriptCollectionDesignTimeArtifacts(Id='${id}',Version='${version}')`;
 }
 
 function getStatus(err: unknown): number | undefined {
-  return axios.isAxiosError(err) ? err.response?.status : undefined;
+  const maybe = err as { response?: { status?: number } } | undefined;
+  const status = maybe?.response?.status;
+  return typeof status === "number" ? status : undefined;
 }
 
 export async function getScriptCollectionMetadata(
@@ -55,6 +56,7 @@ export async function downloadScriptCollectionZip(
   const path = `${buildCollectionPath(id, version)}/$value`;
 
   try {
+    logger.info(`GET ${client.axios.defaults.baseURL ?? ""}${path}`);
     const response = await client.axios.get<ArrayBuffer>(path, {
       responseType: "arraybuffer",
     });

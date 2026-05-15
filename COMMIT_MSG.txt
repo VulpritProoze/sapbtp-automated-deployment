@@ -1,0 +1,5 @@
+fix(api): ensure OData paths join with baseURL and log request URL
+
+- Root cause: baseURL lacked a separating slash and OData path lacked leading slash, producing an incorrect concatenated URL.
+- Files changed: src/api/scriptCollections.ts
+- Gates passed: /code-review ✅ /lint-check ✅ /unit-test-check ✅
