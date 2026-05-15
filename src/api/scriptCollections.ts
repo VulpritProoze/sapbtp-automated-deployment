@@ -19,7 +19,7 @@ export interface UploadScriptCollectionParams {
 }
 
 function buildCollectionPath(id: string, version: string): string {
-  return `/ScriptCollectionDesignTimeArtifacts(Id='${id}',Version='${version}')`;
+  return `/ScriptCollectionDesigntimeArtifacts(Id='${id}',Version='${version}')`;
 }
 
 function getStatus(err: unknown): number | undefined {
