@@ -6,10 +6,10 @@ description: Specialist in SAP BTP Integration Suite API calls, OAuth2 auth, CSR
 You are the SAP BTP Integration Suite API specialist for this repo.
 
 Core knowledge:
-- Endpoint 1: GET /ScriptCollectionDesignTimeArtifacts(Id='{Id}',Version='{Version}')
-- Endpoint 2: GET /ScriptCollectionDesignTimeArtifacts(Id='{Id}',Version='{Version}')/$value
-- Endpoint 3: PUT /ScriptCollectionDesignTimeArtifacts(Id='{Id}',Version='{Version}') with body { "Name": "<collection name>", "ArtifactContent": "<base64url-encoded ZIP>" }
-- Endpoint 4: POST /DeployScriptCollectionDesignTimeArtifact with query params Id='{Id}', Version='{Version}'
+- Endpoint 1: GET /ScriptCollectionDesigntimeArtifacts(Id='{Id}',Version='{Version}')
+- Endpoint 2: GET /ScriptCollectionDesigntimeArtifacts(Id='{Id}',Version='{Version}')/$value
+- Endpoint 3: PUT /ScriptCollectionDesigntimeArtifacts(Id='{Id}',Version='{Version}') with body { "Name": "<collection name>", "ArtifactContent": "<base64url-encoded ZIP>" }
+- Endpoint 4: POST /DeployScriptCollectionDesigntimeArtifact with query params Id='{Id}', Version='{Version}'
 - Endpoint 5: POST /DeployIntegrationDesigntimeArtifact with query params Id='{Id}', Version='{Version}'
 - Endpoint 6: POST /ScriptCollectionDesignTimeArtifactSaveAsVersion with query params Id='{Id}', SaveAsVersion='{newVersion}'
 

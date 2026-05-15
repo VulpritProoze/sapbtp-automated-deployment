@@ -5,7 +5,7 @@ import { createIFlowError } from "../utils/logger";
 import { ensureDir, listGroovyFiles } from "../utils/fs";
 
 export function encodeBase64Url(buffer: Buffer): string {
-  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
 export async function zipGroovyFiles(collectionDir: string): Promise<Buffer> {

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { ApiClient } from "./client";
 import { createIFlowError, logger } from "../utils/logger";
 
@@ -18,14 +19,17 @@ export interface UploadScriptCollectionParams {
   artifactContentBase64Url: string;
 }
 
+interface UploadScriptCollectionRequestBody {
+  Name: string;
+  ArtifactContent: string;
+}
+
 function buildCollectionPath(id: string, version: string): string {
   return `/ScriptCollectionDesigntimeArtifacts(Id='${id}',Version='${version}')`;
 }
 
 function getStatus(err: unknown): number | undefined {
-  const maybe = err as { response?: { status?: number } } | undefined;
-  const status = maybe?.response?.status;
-  return typeof status === "number" ? status : undefined;
+  return axios.isAxiosError(err) ? err.response?.status : undefined;
 }
 
 export async function getScriptCollectionMetadata(
@@ -76,18 +80,20 @@ export async function uploadScriptCollectionZip(
   params: UploadScriptCollectionParams
 ): Promise<void> {
   const path = buildCollectionPath(params.id, params.version);
+  const requestBody: UploadScriptCollectionRequestBody = {
+    Name: params.name,
+    ArtifactContent: params.artifactContentBase64Url,
+  };
 
   try {
     const csrfToken = await client.fetchCsrfToken(path);
     await client.axios.put(
       path,
-      {
-        Name: params.name,
-        ArtifactContent: params.artifactContentBase64Url,
-      },
+      requestBody,
       {
         headers: {
           "X-CSRF-Token": csrfToken,
+          "If-Match": "*",
           "Content-Type": "application/json",
         },
       }

@@ -20,10 +20,30 @@ export function createApiClient(baseUrl: string): ApiClient {
     timeout: 30_000,
   });
 
+  let cookieHeader: string | undefined;
+
+  function updateCookieHeader(setCookieHeader: string[] | string | undefined): void {
+    if (!setCookieHeader) {
+      return;
+    }
+
+    const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader];
+    const normalizedCookies = cookies
+      .map((cookie) => cookie.split(";")[0]?.trim())
+      .filter((cookie): cookie is string => Boolean(cookie));
+
+    if (normalizedCookies.length > 0) {
+      cookieHeader = normalizedCookies.join("; ");
+    }
+  }
+
   client.interceptors.request.use(async (config) => {
     const token = await getAccessToken();
     const headers = AxiosHeaders.from(config.headers);
     headers.set("Authorization", `Bearer ${token}`);
+    if (cookieHeader) {
+      headers.set("Cookie", cookieHeader);
+    }
     config.headers = headers;
     return config;
   });
@@ -41,6 +61,8 @@ export function createApiClient(baseUrl: string): ApiClient {
           "X-CSRF-Token": "Fetch",
         },
       });
+
+      updateCookieHeader(response.headers["set-cookie"]);
 
       const token = response.headers["x-csrf-token"] as string | undefined;
       if (!token) {

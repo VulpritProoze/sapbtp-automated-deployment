@@ -35,7 +35,8 @@ function formatError(err: unknown): string {
       return "Could not reach SAP BTP -- check btpBaseUrl and VPN";
     }
     const status = err.httpStatus ? ` (HTTP ${err.httpStatus})` : "";
-    return `${err.message}${status}`;
+    const backendDetails = extractBackendDetails(err.cause);
+    return `${err.message}${status}${backendDetails}`;
   }
 
   if (err instanceof Error) {
@@ -43,6 +44,51 @@ function formatError(err: unknown): string {
   }
 
   return String(err);
+}
+
+function extractBackendDetails(cause: unknown): string {
+  if (!cause || typeof cause !== "object") {
+    return "";
+  }
+
+  const maybeError = cause as {
+    response?: {
+      data?: unknown;
+      headers?: Record<string, unknown>;
+    };
+  };
+
+  const response = maybeError.response;
+  if (!response) {
+    return "";
+  }
+
+  let backendMessage = "";
+  const data = response.data as
+    | {
+        error?: {
+          message?: {
+            value?: unknown;
+          };
+        };
+      }
+    | undefined;
+
+  if (typeof data?.error?.message?.value === "string" && data.error.message.value.trim()) {
+    backendMessage = data.error.message.value.trim();
+  }
+
+  const headers = response.headers ?? {};
+  const correlationId =
+    typeof headers["x-correlationid"] === "string"
+      ? headers["x-correlationid"]
+      : typeof headers["x-request-id"] === "string"
+        ? headers["x-request-id"]
+        : "";
+
+  const messagePart = backendMessage ? ` | SAP: ${backendMessage}` : "";
+  const correlationPart = correlationId ? ` | CorrelationId: ${correlationId}` : "";
+  return `${messagePart}${correlationPart}`;
 }
 
 function isNetworkError(cause: unknown): boolean {
