@@ -21,7 +21,12 @@ This document explains how to set up, run, and contribute to the `iflow-cli` rep
 - The CLI commands assume `.groovy` files only — nested folders are not packaged into ZIPs.
 
 ## Common commands
-- `npm run start -- <command>` runs the CLI (e.g. `npm run start -- pull --id <collectionId>`).
+- Use the explicit npm scripts that map to CLI commands:
+	- `npm run pull -- --id <collectionId>` — run the `pull` command (example: `npm run pull -- --id Scripts_MyCollection`).
+	- `npm run push -- --id <collectionId>` — run the `push` command.
+	- `npm run deploy -- --id <collectionId>` — run the `deploy` command.
+- Alternative direct invocation (bypasses npm scripts):
+	- `npx ts-node src/cli.ts <command> -- --id <collectionId>`
 - `npm run lint` runs ESLint; `npm run format` runs Prettier auto-fix.
 - `npm run test` runs unit tests; use `npm run test -- --watch` for iterative development.
 
