@@ -1,32 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { zipGroovyFiles, extractGroovyZip } from "../../zip/handler";
-
-vi.mock("../../api/client", () => ({
-  createApiClient: vi.fn(() => ({
-    axios: {
-      get: vi.fn(),
-      put: vi.fn(),
-      post: vi.fn(),
-    },
-    fetchCsrfToken: vi.fn(),
-  })),
-}));
-
-vi.mock("../../config/loader", () => ({
-  loadConfig: vi.fn(() => ({
-    btpBaseUrl: "https://mock.example.com/api/v1",
-    scriptCollectionsDir: "./ScriptCollections",
-    collections: [
-      {
-        id: "Scripts_Test",
-        name: "Scripts_Test",
-        iflowId: "TestFlow",
-        iflowVersion: "active",
-      },
-    ],
-    defaultVersion: "active",
-  })),
-}));
+import fs from "fs";
+import AdmZip from "adm-zip";
+import path from "path";
 
 vi.mock("fs", () => ({
   default: {
@@ -34,8 +10,6 @@ vi.mock("fs", () => ({
       readFile: vi.fn(),
       writeFile: vi.fn(),
       readdir: vi.fn(),
-      stat: vi.fn(),
-      rm: vi.fn(),
       mkdir: vi.fn(),
       access: vi.fn(),
     },
@@ -45,8 +19,6 @@ vi.mock("fs", () => ({
     readFile: vi.fn(),
     writeFile: vi.fn(),
     readdir: vi.fn(),
-    stat: vi.fn(),
-    rm: vi.fn(),
     mkdir: vi.fn(),
     access: vi.fn(),
   },
@@ -59,20 +31,79 @@ describe("zip/handler", () => {
   });
 
   describe("zipGroovyFiles", () => {
-    it("placeholder", () => {
-      // TODO: assert zip contains flat .groovy entries.
-      expect(zipGroovyFiles).toBeDefined();
+    it("should throw when no .groovy files exist", async () => {
+      vi.mocked(fs.promises.readdir).mockResolvedValueOnce([]);
+      
+      await expect(zipGroovyFiles("./dir")).rejects.toThrow("No .groovy files found in ./dir");
     });
 
-    it.todo("should throw when no .groovy files exist");
+    it("should create a zip with internal script path", async () => {
+      const mockFiles = [
+        { isFile: () => true, name: "test1.groovy" },
+      ] as fs.Dirent[];
+      
+      vi.mocked(fs.promises.readdir).mockResolvedValueOnce(mockFiles);
+      vi.mocked(fs.promises.readFile).mockResolvedValueOnce(Buffer.from("mock content"));
+
+      const zipBuffer = await zipGroovyFiles("./dir");
+      const zip = new AdmZip(zipBuffer);
+      const entries = zip.getEntries();
+      
+      expect(entries).toHaveLength(1);
+      expect(entries[0].entryName).toBe("src/main/resources/script/test1.groovy");
+      expect(entries[0].getData().toString()).toBe("mock content");
+    });
+
+    it("should merge base zip and overwrite scripts", async () => {
+      const baseZip = new AdmZip();
+      baseZip.addFile("MANIFEST.MF", Buffer.from("manifest"));
+      baseZip.addFile("src/main/resources/script/test1.groovy", Buffer.from("old content"));
+      const baseBuffer = baseZip.toBuffer();
+
+      const mockFiles = [
+        { isFile: () => true, name: "test1.groovy" },
+      ] as fs.Dirent[];
+      
+      vi.mocked(fs.promises.readdir).mockResolvedValueOnce(mockFiles);
+      vi.mocked(fs.promises.readFile).mockResolvedValueOnce(Buffer.from("new content"));
+
+      const zipBuffer = await zipGroovyFiles("./dir", baseBuffer);
+      const zip = new AdmZip(zipBuffer);
+      const entries = zip.getEntries();
+      
+      expect(entries).toHaveLength(2);
+      
+      const manifest = entries.find(e => e.entryName === "MANIFEST.MF");
+      expect(manifest).toBeDefined();
+      expect(manifest?.getData().toString()).toBe("manifest");
+
+      const script = entries.find(e => e.entryName === "src/main/resources/script/test1.groovy");
+      expect(script).toBeDefined();
+      expect(script?.getData().toString()).toBe("new content");
+    });
   });
 
   describe("extractGroovyZip", () => {
-    it("placeholder", () => {
-      // TODO: assert extraction writes .groovy files to dest.
-      expect(extractGroovyZip).toBeDefined();
-    });
+    it("should extract only .groovy files", async () => {
+      const zip = new AdmZip();
+      zip.addFile("test1.groovy", Buffer.from("content1"));
+      zip.addFile("MANIFEST.MF", Buffer.from("manifest"));
+      const buffer = zip.toBuffer();
 
-    it.todo("should ignore non-groovy files");
+      const dest = "./dest";
+      vi.mocked(fs.promises.mkdir).mockResolvedValueOnce(undefined);
+      vi.mocked(fs.promises.writeFile).mockResolvedValue(undefined);
+
+      const result = await extractGroovyZip(buffer, dest);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toBe(path.join(dest, "test1.groovy"));
+      
+      expect(fs.promises.writeFile).toHaveBeenCalledTimes(1);
+      expect(fs.promises.writeFile).toHaveBeenCalledWith(
+        path.join(dest, "test1.groovy"),
+        expect.any(Buffer)
+      );
+    });
   });
 });

@@ -76,6 +76,9 @@ function extractBackendDetails(cause: unknown): string {
 
   if (typeof data?.error?.message?.value === "string" && data.error.message.value.trim()) {
     backendMessage = data.error.message.value.trim();
+  } else if (data && typeof data === "object") {
+    // Fallback to stringified data so we don't lose the specific error message
+    backendMessage = JSON.stringify(data);
   }
 
   const headers = response.headers ?? {};

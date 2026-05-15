@@ -4,17 +4,32 @@ import fs from "fs";
 import { createIFlowError } from "../utils/logger";
 import { ensureDir, listGroovyFiles } from "../utils/fs";
 
-export async function zipGroovyFiles(collectionDir: string): Promise<Buffer> {
+export async function zipGroovyFiles(
+  collectionDir: string,
+  baseZipBuffer?: Buffer
+): Promise<Buffer> {
   const files = await listGroovyFiles(collectionDir);
   if (files.length === 0) {
     throw createIFlowError("ZIP_ERROR", `No .groovy files found in ${collectionDir}`);
   }
 
   const zip = new AdmZip();
+
+  if (baseZipBuffer) {
+    const origZip = new AdmZip(baseZipBuffer);
+    for (const entry of origZip.getEntries()) {
+      if (!entry.isDirectory) {
+        zip.addFile(entry.entryName, entry.getData());
+      }
+    }
+  }
   for (const filePath of files) {
     const fileName = path.basename(filePath);
+    const internalPath = `src/main/resources/script/${fileName}`;
     const content = await fs.promises.readFile(filePath);
-    zip.addFile(fileName, content);
+
+    // AdmZip's addFile overwrites if the file already exists at the path
+    zip.addFile(internalPath, content);
   }
 
   return zip.toBuffer();

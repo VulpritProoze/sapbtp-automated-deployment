@@ -4,6 +4,7 @@ import {
   deployScriptCollection,
   uploadScriptCollectionZip,
   saveScriptCollectionAsVersion,
+  downloadScriptCollectionZip,
 } from "../api/scriptCollections";
 import { IFlowConfig, findCollection } from "../config/loader";
 import { zipGroovyFiles } from "../zip/handler";
@@ -28,7 +29,15 @@ export async function runPushCommand(
     const collection = findCollection(config, options.id);
     const collectionName = collection?.name ?? options.id;
 
-    const zipBuffer = await zipGroovyFiles(collectionDir);
+    logger.info(`Downloading base ZIP for ${options.id} (${version})...`);
+    let baseZipBuffer: Buffer | undefined;
+    try {
+      baseZipBuffer = await downloadScriptCollectionZip(client, options.id, version);
+    } catch {
+      logger.warn(`Could not download base ZIP (maybe it's empty). Continuing with fresh ZIP.`);
+    }
+
+    const zipBuffer = await zipGroovyFiles(collectionDir, baseZipBuffer);
 
     await uploadScriptCollectionZip(client, {
       id: options.id,
