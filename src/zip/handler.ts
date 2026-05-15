@@ -4,14 +4,6 @@ import fs from "fs";
 import { createIFlowError } from "../utils/logger";
 import { ensureDir, listGroovyFiles } from "../utils/fs";
 
-export function encodeBase64Url(buffer: Buffer): string {
-  return buffer
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
 export async function zipGroovyFiles(collectionDir: string): Promise<Buffer> {
   const files = await listGroovyFiles(collectionDir);
   if (files.length === 0) {

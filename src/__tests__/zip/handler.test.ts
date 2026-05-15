@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { encodeBase64Url, zipGroovyFiles, extractGroovyZip } from "../../zip/handler";
+import { zipGroovyFiles, extractGroovyZip } from "../../zip/handler";
 
 vi.mock("../../api/client", () => ({
   createApiClient: vi.fn(() => ({
@@ -56,14 +56,6 @@ vi.mock("fs", () => ({
 describe("zip/handler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("encodeBase64Url", () => {
-    it("encodes base64url without padding", () => {
-      expect(encodeBase64Url(Buffer.from("f"))).toBe("Zg");
-    });
-
-    it.todo("should replace +/ and trim padding");
   });
 
   describe("zipGroovyFiles", () => {

@@ -6,8 +6,9 @@ Download a script collection ZIP and extract .groovy files.
 
 ## push
 Upload local .groovy files as a ZIP to SAP BTP.
-- npm run push -- --id <collectionId>
-- npm run push -- --id <collectionId> --deploy
+- `npm run push -- --id <collectionId>`
+- `npm run push -- --id <collectionId> --deploy`
+- `npm run push -- --id <collectionId> --save-version <version>`
 
 ## deploy
 Deploy a script collection. Use --iflow to deploy the associated iFlow.
@@ -24,4 +25,8 @@ Show collection status across all configured collections.
 
 ## init
 Create a new local collection folder and append config.
-- npm run init -- --id <collectionId> --name <displayName>
+- `npm run init -- --id <collectionId> --name <displayName>`
+
+## version
+Save the active script collection draft as a new semantic version on SAP BTP.
+- `npm run version -- --id <collectionId> --new-version <version>`

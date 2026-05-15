@@ -16,7 +16,7 @@ export interface UploadScriptCollectionParams {
   id: string;
   version: string;
   name: string;
-  artifactContentBase64Url: string;
+  zipBuffer: Buffer;
 }
 
 interface UploadScriptCollectionRequestBody {
@@ -82,22 +82,18 @@ export async function uploadScriptCollectionZip(
   const path = buildCollectionPath(params.id, params.version);
   const requestBody: UploadScriptCollectionRequestBody = {
     Name: params.name,
-    ArtifactContent: params.artifactContentBase64Url,
+    ArtifactContent: params.zipBuffer.toString("base64"),
   };
 
   try {
     const csrfToken = await client.fetchCsrfToken(path);
-    await client.axios.put(
-      path,
-      requestBody,
-      {
-        headers: {
-          "X-CSRF-Token": csrfToken,
-          "If-Match": "*",
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    await client.axios.put(path, requestBody, {
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "If-Match": "*",
+        "Content-Type": "application/json",
+      },
+    });
   } catch (err) {
     throw createIFlowError(
       "API_ERROR",

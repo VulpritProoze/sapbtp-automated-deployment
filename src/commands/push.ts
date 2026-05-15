@@ -1,14 +1,19 @@
 import path from "path";
 import { ApiClient } from "../api/client";
-import { deployScriptCollection, uploadScriptCollectionZip } from "../api/scriptCollections";
+import {
+  deployScriptCollection,
+  uploadScriptCollectionZip,
+  saveScriptCollectionAsVersion,
+} from "../api/scriptCollections";
 import { IFlowConfig, findCollection } from "../config/loader";
-import { encodeBase64Url, zipGroovyFiles } from "../zip/handler";
+import { zipGroovyFiles } from "../zip/handler";
 import { logger } from "../utils/logger";
 
 export interface PushOptions {
   id: string;
   version?: string;
   deploy?: boolean;
+  saveVersion?: string;
 }
 
 export async function runPushCommand(
@@ -24,16 +29,20 @@ export async function runPushCommand(
     const collectionName = collection?.name ?? options.id;
 
     const zipBuffer = await zipGroovyFiles(collectionDir);
-    const artifactContent = encodeBase64Url(zipBuffer);
 
     await uploadScriptCollectionZip(client, {
       id: options.id,
       version,
       name: collectionName,
-      artifactContentBase64Url: artifactContent,
+      zipBuffer,
     });
 
     logger.success(`Uploaded script collection ${options.id} (${version})`);
+
+    if (options.saveVersion) {
+      await saveScriptCollectionAsVersion(client, options.id, options.saveVersion);
+      logger.success(`Saved script collection ${options.id} as version ${options.saveVersion}`);
+    }
 
     if (options.deploy) {
       await deployScriptCollection(client, options.id, version);

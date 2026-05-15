@@ -6,6 +6,7 @@ import { runInitCommand } from "./commands/init";
 import { runPullCommand } from "./commands/pull";
 import { runPushCommand } from "./commands/push";
 import { runStatusCommand } from "./commands/status";
+import { runVersionCommand } from "./commands/version";
 import { loadConfig } from "./config/loader";
 import { logger } from "./utils/logger";
 
@@ -28,6 +29,10 @@ async function main(): Promise<void> {
     .command("push")
     .requiredOption("--id <collectionId>", "Script collection Id")
     .option("--deploy", "Deploy after upload")
+    .option(
+      "--save-version <version>",
+      "Save the active script collection as a version after pushing"
+    )
     .action((options) => runPushCommand(apiClient, config, options));
 
   program
@@ -48,6 +53,14 @@ async function main(): Promise<void> {
     .requiredOption("--id <collectionId>", "Script collection Id")
     .option("--name <displayName>", "Display name for the collection")
     .action((options) => runInitCommand(config, options));
+
+  program
+    .command("version")
+    .requiredOption("--id <collectionId>", "Script collection Id")
+    .requiredOption("--new-version <version>", "The new version to save the collection as")
+    .action((options) =>
+      runVersionCommand(apiClient, config, { id: options.id, newVersion: options.newVersion })
+    );
 
   await program.parseAsync(process.argv);
 }
