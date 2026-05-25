@@ -60,20 +60,30 @@ export function findCollection(
 }
 
 export function loadConfig(): IFlowConfig {
-  const envPath = path.resolve(process.cwd(), ".env");
+  const projectRoot = process.cwd();
+  const envPath = path.resolve(projectRoot, ".env");
   dotenv.config({ path: envPath });
   validateEnv();
+  const primaryConfigPath = path.resolve(projectRoot, "sapbtp.config.json");
+  const fallbackConfigPath = path.resolve(projectRoot, "iflow.config.json");
 
-  const configPath = path.resolve(process.cwd(), "iflow.config.json");
-  if (!fs.existsSync(configPath)) {
-    throw createIFlowError("CONFIG_ERROR", `Missing iflow.config.json at ${configPath}`);
+  let configPath: string | undefined;
+  if (fs.existsSync(primaryConfigPath)) {
+    configPath = primaryConfigPath;
+  } else if (fs.existsSync(fallbackConfigPath)) {
+    configPath = fallbackConfigPath;
+  } else {
+    throw createIFlowError(
+      "CONFIG_ERROR",
+      `Missing config file. Expected sapbtp.config.json or iflow.config.json in ${projectRoot}`
+    );
   }
 
   let rawConfig: unknown;
   try {
     rawConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
   } catch (err) {
-    throw createIFlowError("CONFIG_ERROR", "Failed to parse iflow.config.json", undefined, err);
+    throw createIFlowError("CONFIG_ERROR", `Failed to parse config at ${configPath}`, undefined, err);
   }
 
   const config = rawConfig as Partial<IFlowConfig>;

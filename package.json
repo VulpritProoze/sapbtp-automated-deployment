@@ -2,7 +2,7 @@
   "name": "iflow-cli",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "pull": "ts-node src/cli.ts pull",
     "push": "ts-node src/cli.ts push",
@@ -10,6 +10,8 @@
     "diff": "ts-node src/cli.ts diff",
     "status": "ts-node src/cli.ts status",
     "init": "ts-node src/cli.ts init",
+    "build": "tsc --outDir dist --rootDir src",
+    "prepack": "npm run build",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
     "typecheck": "tsc --noEmit",
@@ -39,5 +41,17 @@
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
+  },
+  "bin": {
+    "iflow-cli": "dist/cli.js"
+  },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.js"
   }
 }
