@@ -177,6 +177,19 @@ Exit criteria:
 
 ## Suggested code changes by area
 
+## Progress update
+
+- Phase 1 — package boundary: ✅ Implemented. Added `src/index.ts`, `bin` mapping, `build`/`prepack` scripts, and package `exports`/`files` to `package.json`.
+- Phase 2 — config discovery: ✅ Implemented. `src/config/loader.ts` now prefers `sapbtp.config.json`, falls back to `iflow.config.json`, and loads `.env` from project root with clearer errors.
+- Phase 3 — folder customization: ✅ Implemented. `scriptCollectionsDir` defaults to `ScriptCollections` when missing; commands use resolved folder.
+- Phase 4 — library API cleanup: ⬜ Not yet started. Public surface currently re-exports command runners and core helpers; further API hardening planned.
+- Phase 5 — documentation & migration: ✅ Partially implemented. Updated `docs/getting-started.md` and `docs/config-reference.md` to document config discovery and `scriptCollectionsDir` behavior.
+- Phase 6 — verification: ✅ Implemented. Typecheck + Vitest run clean; `npm pack --dry-run` verified publish contents; added CI workflow `.github/workflows/ci.yml`.
+
+Notes:
+- Branch `release/package-ready` created and commits pushed locally with these changes.
+- Next recommended actions: finalize Phase 4, open PR from `release/package-ready`, and publish when ready.
+
 ### src/cli.ts
 - keep commander registration here
 - ensure the compiled CLI remains the package executable

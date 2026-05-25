@@ -88,7 +88,11 @@ export function loadConfig(): IFlowConfig {
 
   const config = rawConfig as Partial<IFlowConfig>;
   assertString(config.btpBaseUrl, "btpBaseUrl");
-  assertString(config.scriptCollectionsDir, "scriptCollectionsDir");
+
+  const scriptCollectionsDir =
+    typeof config.scriptCollectionsDir === "string" && config.scriptCollectionsDir
+      ? config.scriptCollectionsDir
+      : "ScriptCollections";
 
   const collections = validateCollections(config.collections);
   const defaultVersion =
@@ -98,7 +102,7 @@ export function loadConfig(): IFlowConfig {
 
   return {
     btpBaseUrl: config.btpBaseUrl,
-    scriptCollectionsDir: config.scriptCollectionsDir,
+    scriptCollectionsDir,
     collections,
     defaultVersion,
   };
