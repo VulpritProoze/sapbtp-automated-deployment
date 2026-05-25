@@ -1,10 +1,10 @@
 # Config reference
 
-File: iflow.config.json
+File: sapbtp.config.json (preferred) or iflow.config.json (fallback)
 
 ## Fields
 - btpBaseUrl: Base API URL for SAP BTP Integration Suite.
-- scriptCollectionsDir: Local folder for ScriptCollections.
+- scriptCollectionsDir: Local folder for ScriptCollections. Optional — defaults to `ScriptCollections` when absent.
 - collections: Array of script collection registrations.
 - defaultVersion: Default version string (typically "active").
 
@@ -17,7 +17,6 @@ File: iflow.config.json
 ## Example
 {
   "btpBaseUrl": "https://<your-tenant>.it-cpi018-rt.cfapps.<region>.hana.ondemand.com/api/v1",
-  "scriptCollectionsDir": "./ScriptCollections",
   "collections": [
     {
       "id": "Scripts_SAPtoWEBPOS",
@@ -28,3 +27,5 @@ File: iflow.config.json
   ],
   "defaultVersion": "active"
 }
+
+Note: omit `scriptCollectionsDir` to use default `ScriptCollections`, or set it to a relative path to override.
