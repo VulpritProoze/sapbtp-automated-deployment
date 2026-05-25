@@ -108,12 +108,36 @@ describe("api/scriptCollections", () => {
 
       await deployScriptCollection(mockClient, "test", "1.0.0");
 
+      expect(mockClient.fetchCsrfToken).toHaveBeenCalledWith(
+        "DeployScriptCollectionDesigntimeArtifact",
+        { Id: "'test'", Version: "'1.0.0'" }
+      );
       expect(mockAxios.post).toHaveBeenCalledWith(
-        "DeployScriptCollectionDesignTimeArtifact",
+        "DeployScriptCollectionDesigntimeArtifact",
         null,
         expect.objectContaining({
           params: { Id: "'test'", Version: "'1.0.0'" },
         })
+      );
+    });
+
+    it("should include endpoint context when CSRF fetch fails", async () => {
+      vi.mocked(mockClient.fetchCsrfToken).mockRejectedValueOnce(new Error("CSRF Error"));
+
+      await expect(deployScriptCollection(mockClient, "test", "1.0.0")).rejects.toThrow(
+        "Failed to fetch CSRF token for script collection deploy test via DeployScriptCollectionDesigntimeArtifact (Version=1.0.0)"
+      );
+    });
+
+    it("should include endpoint context when deploy request fails", async () => {
+      vi.mocked(mockClient.fetchCsrfToken).mockResolvedValueOnce("mock-csrf");
+      mockAxios.post.mockRejectedValueOnce({
+        isAxiosError: true,
+        response: { status: 500, data: { error: { message: { value: "Deploy failed" } } } },
+      });
+
+      await expect(deployScriptCollection(mockClient, "test", "1.0.0")).rejects.toThrow(
+        "Failed to deploy script collection test via DeployScriptCollectionDesigntimeArtifact (Version=1.0.0)"
       );
     });
   });
@@ -125,6 +149,10 @@ describe("api/scriptCollections", () => {
 
       await saveScriptCollectionAsVersion(mockClient, "test", "1.0.1");
 
+      expect(mockClient.fetchCsrfToken).toHaveBeenCalledWith(
+        "ScriptCollectionDesignTimeArtifactSaveAsVersion",
+        { Id: "'test'", SaveAsVersion: "'1.0.1'" }
+      );
       expect(mockAxios.post).toHaveBeenCalledWith(
         "ScriptCollectionDesignTimeArtifactSaveAsVersion",
         null,

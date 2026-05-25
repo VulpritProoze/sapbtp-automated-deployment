@@ -109,13 +109,27 @@ export async function deployScriptCollection(
   id: string,
   version: string
 ): Promise<void> {
+  const endpoint = "DeployScriptCollectionDesigntimeArtifact";
+  const params = {
+    Id: `'${id}'`,
+    Version: `'${version}'`,
+  };
+
+  let csrfToken: string;
   try {
-    const csrfToken = await client.fetchCsrfToken("DeployScriptCollectionDesignTimeArtifact");
-    await client.axios.post("DeployScriptCollectionDesignTimeArtifact", null, {
-      params: {
-        Id: `'${id}'`,
-        Version: `'${version}'`,
-      },
+    csrfToken = await client.fetchCsrfToken(endpoint, params);
+  } catch (err) {
+    throw createIFlowError(
+      "API_ERROR",
+      `Failed to fetch CSRF token for script collection deploy ${id} via ${endpoint} (Version=${version})`,
+      getStatus(err),
+      err
+    );
+  }
+
+  try {
+    await client.axios.post(endpoint, null, {
+      params,
       headers: {
         "X-CSRF-Token": csrfToken,
       },
@@ -123,7 +137,7 @@ export async function deployScriptCollection(
   } catch (err) {
     throw createIFlowError(
       "API_ERROR",
-      `Failed to deploy script collection ${id}`,
+      `Failed to deploy script collection ${id} via ${endpoint} (Version=${version})`,
       getStatus(err),
       err
     );
@@ -135,15 +149,16 @@ export async function saveScriptCollectionAsVersion(
   id: string,
   newVersion: string
 ): Promise<void> {
+  const endpoint = "ScriptCollectionDesignTimeArtifactSaveAsVersion";
+  const params = {
+    Id: `'${id}'`,
+    SaveAsVersion: `'${newVersion}'`,
+  };
+
   try {
-    const csrfToken = await client.fetchCsrfToken(
-      "ScriptCollectionDesignTimeArtifactSaveAsVersion"
-    );
-    await client.axios.post("ScriptCollectionDesignTimeArtifactSaveAsVersion", null, {
-      params: {
-        Id: `'${id}'`,
-        SaveAsVersion: `'${newVersion}'`,
-      },
+    const csrfToken = await client.fetchCsrfToken(endpoint, params);
+    await client.axios.post(endpoint, null, {
+      params,
       headers: {
         "X-CSRF-Token": csrfToken,
       },

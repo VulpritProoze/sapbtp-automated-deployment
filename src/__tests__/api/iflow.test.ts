@@ -22,6 +22,10 @@ describe("api/iflow", () => {
 
       await deployIflow(mockClient, "test-iflow", "active");
 
+      expect(mockClient.fetchCsrfToken).toHaveBeenCalledWith(
+        "DeployIntegrationDesigntimeArtifact",
+        { Id: "'test-iflow'", Version: "'active'" }
+      );
       expect(mockAxios.post).toHaveBeenCalledWith(
         "DeployIntegrationDesigntimeArtifact",
         null,

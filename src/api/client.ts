@@ -4,7 +4,7 @@ import { createIFlowError } from "../utils/logger";
 
 export interface ApiClient {
   axios: AxiosInstance;
-  fetchCsrfToken: (path: string) => Promise<string>;
+  fetchCsrfToken: (path: string, params?: Record<string, string>) => Promise<string>;
 }
 
 export function createApiClient(baseUrl: string): ApiClient {
@@ -50,7 +50,7 @@ export function createApiClient(baseUrl: string): ApiClient {
 
   let csrfToken: string | null = null;
 
-  const fetchCsrfToken = async (path: string): Promise<string> => {
+  const fetchCsrfToken = async (path: string, params?: Record<string, string>): Promise<string> => {
     if (csrfToken) {
       return csrfToken;
     }
@@ -60,6 +60,7 @@ export function createApiClient(baseUrl: string): ApiClient {
         headers: {
           "X-CSRF-Token": "Fetch",
         },
+        params,
       });
 
       updateCookieHeader(response.headers["set-cookie"]);
@@ -73,6 +74,14 @@ export function createApiClient(baseUrl: string): ApiClient {
       return csrfToken;
     } catch (err) {
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      if (axios.isAxiosError(err)) {
+        const tokenFromError = err.response?.headers?.["x-csrf-token"] as string | undefined;
+        if (tokenFromError) {
+          updateCookieHeader(err.response.headers["set-cookie"]);
+          csrfToken = tokenFromError;
+          return csrfToken;
+        }
+      }
       throw createIFlowError("CSRF_ERROR", "Failed to fetch CSRF token", status, err);
     }
   };

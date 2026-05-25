@@ -7,13 +7,16 @@ function getStatus(err: unknown): number | undefined {
 }
 
 export async function deployIflow(client: ApiClient, id: string, version: string): Promise<void> {
+  const endpoint = "DeployIntegrationDesigntimeArtifact";
+  const params = {
+    Id: `'${id}'`,
+    Version: `'${version}'`,
+  };
+
   try {
-    const csrfToken = await client.fetchCsrfToken("DeployIntegrationDesigntimeArtifact");
-    await client.axios.post("DeployIntegrationDesigntimeArtifact", null, {
-      params: {
-        Id: `'${id}'`,
-        Version: `'${version}'`,
-      },
+    const csrfToken = await client.fetchCsrfToken(endpoint, params);
+    await client.axios.post(endpoint, null, {
+      params,
       headers: {
         "X-CSRF-Token": csrfToken,
       },
